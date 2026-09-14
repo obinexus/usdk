@@ -8,7 +8,7 @@
 | `usdk-core` | The candidate lifecycle, the round state machine (open -> collect votes -> decide -> commit/reject), commit records, and idempotency-key bookkeeping for dispatched actions. Backend-independent: no interpreter headers, no device APIs, no dynamic-loader implementation. | This is the only place the consensus protocol's state machine is implemented. It orchestrates calls through role handles it is given - it does not itself decide how those handles were loaded. |
 | `usdk-ffi` | Dynamic module discovery (`LoadLibraryExW`/`dlopen` behind one interface), ABI negotiation via `usdk_plugin_query_v1`, module manifest parsing, full transitive dependency resolution with cycle detection, and library lifecycle (load, keep-alive while calls/objects/callbacks are outstanding, safe unload). | Platform-loading code is deliberately isolated here so `usdk-core` and the three role libraries never call `LoadLibraryExW`/`dlopen` directly. `usdk-core` depends on `usdk-ffi` to *load* role modules; `usdk-ffi` does not depend on `usdk-core` or know what a "role" or "candidate" is - it resolves and loads named capabilities, nothing more. |
 | `usdk-driver-<backend>` | Optional model/device/storage/execution adapters implementing a declared interface (e.g. `usdk-driver-fixture`, a deterministic candidate generator used by `usdk-deliberate` and by every test in this repository that needs reproducible output). | Drivers are loaded the same way role modules are - through `usdk-ffi` - so `usdk-deliberate`'s core logic never links a specific backend. Replacing the fixture driver with a real local-inference driver requires no change to `usdk-deliberate`, `usdk-core`, or the protocol. |
-| `usdk-binding-<language>` | Optional language-native wrappers around the public C ABI. | Not implemented in this release - see `docs/IMPLEMENTATION_STATUS.md`. The C ABI is designed to make one straightforward (opaque handles, explicit lifecycle, no raw pointers over any serialized boundary), but no binding is shipped. |
+| `usdk-binding-<language>` | Optional language-native wrappers around the public C ABI. | `packages/binding-python` (ctypes, `usdk-perceive` role only, tested against the real DLLs) and `packages/binding-lua` (LuaJIT FFI, same scope, untested - no runtime available) were added for the UAgent browser extension - see `docs/UAGENT_ARCHITECTURE.md` and `docs/IMPLEMENTATION_STATUS.md`. Neither binds `usdk-deliberate`/`usdk-verify`/`usdk-core` yet. |
 | `usdk-cli` | Developer commands: `--help`/`-h`/`help`, `doctor`, `inspect <module>`, `validate --config`, `demo --scenario trilateral-consensus`. | Depends on `usdk-core` and `usdk-ffi` to do real work; contains no protocol logic of its own beyond argument parsing and JSON/text formatting. |
 
 ## The three constituent packages
@@ -89,4 +89,8 @@ any specific driver.** Checked directly: `src/core/CMakeLists.txt` names
 only `usdk_contracts` and `usdk_ffi` in `target_link_libraries`; nothing
 under `src/core/` `#include`s a Python header, a vendor SDK header, or
 `src/driver_fixture/*`. No target in this repository links Python at all
-- `usdk-binding-python` is not implemented (see `docs/IMPLEMENTATION_STATUS.md`).
+- `packages/binding-python` (added for the UAgent extension, see
+  `docs/UAGENT_ARCHITECTURE.md`) links no target in *this* CMake build -
+  it calls the built `.dll`s from outside the build system entirely, via
+  Python's `ctypes.CDLL` at runtime, so the statement above about no
+  CMake target linking Python remains accurate.

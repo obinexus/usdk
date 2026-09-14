@@ -154,6 +154,20 @@ test('host-browser: cancelTurn() causes an in-flight turn to report superseded, 
   assert.equal(result.status, 'superseded');
 });
 
+test('host-browser: cancelTurn() during an in-flight robotics proposal reports superseded, not committed, and never dispatches', async () => {
+  const a11y = fakeA11y();
+  const session = new ConversationSession({
+    sessionId: 's7b', manifests, baseUrl, llmManifestName: 'driver-llm-fixture', roboticsManifestName: 'driver-robotics-sim', a11y,
+    allowedConstraints: ['robotics:bounded-move'],
+  });
+  await session.init();
+  const p = session.proposeRoboticsAction({ direction: 'forward', distanceM: 0.2, speedMS: 0.1 });
+  session.cancelTurn();
+  const result = await p;
+  assert.equal(result.status, 'superseded');
+  assert.equal(result.executionCompleted, undefined); // never reached dispatch, so this field is never set
+});
+
 test('host-browser: emergencyStop() reaches the robotics driver directly, bypassing deliberation', async () => {
   const a11y = fakeA11y();
   const session = new ConversationSession({

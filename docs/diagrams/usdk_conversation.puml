@@ -1,0 +1,133 @@
+@startuml usdk_conversation
+' Reconciles the task-supplied starting sequence sketch (user turn ->
+' evidence/uncertainty -> loaded model driver produces a candidate ->
+' three distinct role checks approve/reject -> approved text
+' displayed/spoken -> permitted robotics action executes; rejected
+' action never executes) with the actual call sequence as built - see
+' packages/host-browser/src/index.mjs sendText()/proposeRoboticsAction()/
+' _runRound(), and docs/UAGENT_ARCHITECTURE.md "Ensure external effects
+' pass through the agreement gate" / "Prevention of stale speech".
+'
+' RENDERING UNVERIFIED: no local PlantUML CLI or plantuml.jar+Java found
+' in this environment - see docs/diagrams/usdk_uagent_components.puml's
+' header note; this .puml ships unrendered per the task's own
+' instruction not to download tooling.
+
+actor User
+participant "uagent UI\n(app.mjs)" as UI
+participant "ConversationSession\n(host-browser)" as Session
+participant "perceive" as Perceive
+participant "deliberate" as Deliberate
+participant "Core\n(round state machine)" as Core
+participant "verify" as Verify
+participant "driver-voice /\ndriver-robotics-sim" as Driver
+
+== Text turn - approved path ==
+
+User -> UI : types message, submits
+UI -> Session : sendText(text)
+activate Session
+Session -> Session : turnId = fresh id\n_currentTurnId = turnId
+Session -> Perceive : observe(text, uncertainty=0.1)
+Perceive --> Session : evidenceRef
+Session -> Deliberate : propose(text, [evidenceRef])
+Deliberate --> Session : responseText
+
+alt _currentTurnId != turnId\n(a newer call or cancelTurn() superseded this one)
+  Session --> UI : { status: 'superseded' }
+else still current
+  Session -> Session : createCandidate({..., evidenceRef,\nresponseText, constraint:\n"workspace:temp-only"})
+  Session -> Core : openRound(candidate)
+  Core --> Session : round
+
+  Session -> Perceive : vote(candidate)
+  Perceive --> Session : ACCEPT "evidence-verified"
+  Session -> Core : submitVote(round, perceiveVote)
+
+  Session -> Deliberate : vote(candidate)
+  Deliberate --> Session : ACCEPT (self-consistency: matches propose() output)
+  Session -> Core : submitVote(round, deliberateVote)
+
+  Session -> Verify : vote(candidate)
+  Verify --> Session : ACCEPT (evidence sufficient,\nconstraint permitted)
+  Session -> Core : submitVote(round, verifyVote)
+
+  Session -> Core : decide(round)
+  activate Core
+  note right of Core
+    Commit rule: ACCEPT from ALL
+    THREE roles required. REJECT,
+    ABSTAIN, timeout, a detected
+    candidate mutation, or a missing
+    vote all prevent commit - see
+    docs/CONSENSUS_PROTOCOL.md.
+  end note
+  Core -> Core : all three ACCEPT -> COMMITTED
+  Core -> Driver : dispatchFn(candidate)\n(ONLY reached on commit)
+  Driver --> Core : speak() onDone / n/a for text
+  Core --> Session : state = COMMITTED
+  deactivate Core
+
+  Session -> Session : re-check _currentTurnId == turnId\n(guards against a cancellation that\narrived while decide() was running)
+  Session -> UI : { status: 'committed', text: responseText }
+end
+UI -> User : displays approved text,\nannounces via aria-live
+deactivate Session
+
+== Robotics action - permitted path ==
+
+User -> UI : clicks "Move forward"
+UI -> Session : proposeRoboticsAction({direction, distanceM, speedMS})
+Session -> Session : validateRoboticsAction(action)\n(fails fast if malformed - before\nany candidate/round exists)
+Session -> Perceive : observe(actionJson, uncertainty=0.05)
+Perceive --> Session : evidenceRef
+Session -> Deliberate : proposeDirect(actionJson)
+Session -> Session : createCandidate({..., constraint:\n"robotics:bounded-move"})
+Session -> Core : openRound + 3x vote + decide (as above)
+Core -> Driver : dispatchFn(candidate)\ndriver-robotics-sim.execute(action)
+Driver -> Driver : re-validate bounds\n(independent of proposal-time check)
+Driver --> Core : { completed: true/false }
+Core --> Session : state = COMMITTED
+Session -> Session : result.executionCompleted =\nlastDispatchResult.completed
+Session --> UI : { status: 'committed',\nexecutionCompleted }
+UI -> User : "Approved and executed" OR\n"Approved, but did not complete\n(stopped or interrupted)"
+
+== Robotics action - rejected (never executes) ==
+
+User -> UI : proposes an out-of-policy action
+UI -> Session : proposeRoboticsAction(action)
+Session -> Core : openRound + 3x vote\n(verify votes REJECT:\nconstraint not in allowedConstraints)
+Core -> Core : not unanimous ACCEPT -> REJECTED
+note right of Core
+  dispatchFn is NEVER called on a
+  non-committed round - this is
+  enforced by Core.decide()'s own
+  control flow, not by driver-side
+  discretion.
+end note
+Core --> Session : state = REJECTED
+Session --> UI : { status: 'rejected' }
+UI -> User : "Not approved (rejected)"
+
+== Emergency stop - bypasses deliberation entirely ==
+
+User -> UI : clicks EMERGENCY STOP
+UI -> Session : emergencyStop()
+Session -> Driver : emergencyStop()\n(direct call, no round,\nno candidate, no vote)
+Driver -> Driver : cancel in-progress\nsimulated movement immediately
+note over Session, Driver
+  A round already COMMITTED before
+  the estop arrives can still report
+  status: 'committed' (the PROPOSAL
+  was approved) while
+  executionCompleted: false (the
+  movement itself did not finish) -
+  these are different facts, both
+  surfaced to the UI. Found via live
+  interactive browser testing, not
+  designed upfront - see
+  docs/UAGENT_ARCHITECTURE.md
+  "Robotics".
+end note
+
+@enduml

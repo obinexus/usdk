@@ -40,3 +40,45 @@ test("driver-voice: label() discloses that speech recognition is typically not o
   const v = create();
   assert.ok(v.label().length > 0);
 });
+
+test('driver-voice: speak() still calls onDone via the fallback timeout if onend/onerror never fire - reproduces a real hang found live in a browser pane where speechSynthesis silently never fired either callback', async () => {
+  // A minimal fake speechSynthesis whose utterance is accepted but NEVER
+  // dispatches onend/onerror - the exact failure mode observed live.
+  const originalSynthesis = globalThis.speechSynthesis;
+  const originalUtteranceCtor = globalThis.SpeechSynthesisUtterance;
+  globalThis.speechSynthesis = { speak() {}, cancel() {} };
+  globalThis.SpeechSynthesisUtterance = class { constructor(text) { this.text = text; } };
+  try {
+    const v = create({ speakFallbackTimeoutMs: 20 });
+    const done = await new Promise((resolve) => {
+      v.speak('hello', 'turn-1', () => resolve(true));
+    });
+    assert.equal(done, true);
+  } finally {
+    globalThis.speechSynthesis = originalSynthesis;
+    globalThis.SpeechSynthesisUtterance = originalUtteranceCtor;
+  }
+});
+
+test('driver-voice: speak() calls onDone exactly once even if both onend fires AND the fallback timer was pending', async () => {
+  const originalSynthesis = globalThis.speechSynthesis;
+  const originalUtteranceCtor = globalThis.SpeechSynthesisUtterance;
+  let utteranceRef = null;
+  globalThis.speechSynthesis = {
+    speak(u) { utteranceRef = u; setTimeout(() => u.onend?.(), 5); },
+    cancel() {},
+  };
+  globalThis.SpeechSynthesisUtterance = class { constructor(text) { this.text = text; } };
+  try {
+    const v = create({ speakFallbackTimeoutMs: 1000 });
+    let callCount = 0;
+    await new Promise((resolve) => {
+      v.speak('hello', 'turn-1', () => { callCount++; resolve(); });
+    });
+    await new Promise((r) => setTimeout(r, 30)); // let a stray fallback fire, if any, surface
+    assert.equal(callCount, 1);
+  } finally {
+    globalThis.speechSynthesis = originalSynthesis;
+    globalThis.SpeechSynthesisUtterance = originalUtteranceCtor;
+  }
+});

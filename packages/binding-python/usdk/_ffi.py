@@ -124,6 +124,9 @@ def load_contracts_library(path: str):
     ]
     lib.usdk_candidate_create.restype = C.c_int
 
+    lib.usdk_monotonic_ns.argtypes = []
+    lib.usdk_monotonic_ns.restype = C.c_int64
+
     return lib
 
 

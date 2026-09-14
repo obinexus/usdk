@@ -131,15 +131,44 @@ always succeeding deterministically).
 
 ## Adding a language binding
 
-No `usdk-binding-<language>` is implemented in this release
-(`docs/IMPLEMENTATION_STATUS.md`). The ABI is designed to make one
+`packages/binding-python` (ctypes) and `packages/binding-lua` (LuaJIT
+FFI) exist, both scoped to the `usdk-perceive` role only - see their
+READMEs for exact usage and why `usdk-deliberate`/`usdk-verify`/
+`usdk-core` are not bound yet. The ABI is designed to make a binding
 straightforward: every public struct uses only fixed-width types, opaque
 handles with explicit lifecycle functions, and pointer+length buffers
 (`docs/ABI.md`) - no raw pointers or padding need to survive a language
-boundary. A binding would wrap `usdk_plugin_query_v1` (or, more simply,
-call the three constituents' direct-link functions - `usdk_perceive_*`
-etc. - the way `src/cli/main.c`'s `demo` command does) and the
-`usdk-core` round API (`include/usdk/core.h`).
+boundary. Extending either binding (or adding a new one) to
+`usdk-deliberate`/`usdk-verify` follows the exact same pattern already
+used for `usdk-perceive` in `packages/binding-python/usdk/_ffi.py`: wrap
+`usdk_<role>_create/destroy/vote` (and `propose` for deliberate) the way
+`src/cli/main.c`'s `demo` command calls the three constituents'
+direct-link functions, and the `usdk-core` round API
+(`include/usdk/core.h`) if a full round is needed outside JS.
+
+## The UAgent browser extension
+
+A separate, additive layer under `packages/*` (`@usdk/contracts` through
+`@usdk/uagent`/`@usdk/devtools`) composes this native SDK's roles (in a
+pure-JS reimplementation, not the C library directly - except for
+`@usdk/host-local`'s native diagnostics bridge) into a browser-loadable
+conversational application. See `docs/UAGENT_ARCHITECTURE.md` for the
+full design and `docs/UAGENT_PACKAGES.md` for the package table.
+Quick start (from the repo root, any shell with Node 20+ - no MSYS2
+shell required, unlike the native build above):
+
+```bash
+npm install --offline
+npm test                 # 99 JS tests
+npm run dev               # serves packages/ directly, no build step
+```
+
+Then open `http://127.0.0.1:8420/packages/uagent/public/index.html`
+(Browser-local) or `.../connected.html` (Connected - also start
+`node -e "import('@usdk/host-local').then(m=>m.startHostLocal())"`
+first and copy its printed pairing secret into the page). `npm run
+build && npm run serve` builds and serves the standalone `dist/` output
+instead.
 
 ## Diagnosing a rejected agreement round
 

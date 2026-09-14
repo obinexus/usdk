@@ -15,7 +15,6 @@ Only stdlib (ctypes) is used - no third-party dependencies.
 """
 
 import os
-import time
 
 from ._ffi import (
     Buffer,
@@ -64,14 +63,22 @@ class Perceive:
             vote = p.vote(candidate)
     """
 
-    def __init__(self, dll_path: str):
+    def __init__(self, dll_path: str, config_json: bytes = None):
+        """`config_json`, if given, is passed through verbatim as the
+        role's opaque config payload (include/usdk/perceive.h documents
+        its one field: {"require_evidence": bool}, default true)."""
         if not os.path.isfile(dll_path):
             raise FileNotFoundError(f"usdk_perceive native library not found: {dll_path}")
         self._lib = load_perceive_library(dll_path)
         self._handle = C.c_void_p()
 
-        empty = Buffer(data=None, len=0)
-        config = Config(data=empty)
+        if config_json:
+            cfg_type = C.c_uint8 * len(config_json)
+            self._cfg_buf = cfg_type.from_buffer_copy(config_json)  # kept alive only for this call
+            data = Buffer(data=C.cast(self._cfg_buf, C.POINTER(C.c_uint8)), len=len(config_json))
+        else:
+            data = Buffer(data=None, len=0)
+        config = Config(data=data)
         status = self._lib.usdk_perceive_create(C.byref(config), C.byref(self._handle))
         if status != 0:
             raise UsdkError(status, "usdk_perceive_create")
@@ -159,6 +166,7 @@ class Contracts:
         evidence_refs=(),
         constraint_ids=(),
         deadline_ns: int = None,
+        deadline_from_now_ns: int = 5_000_000_000,
     ) -> Candidate:
         """Builds a native Candidate struct via usdk_candidate_create,
         which fills in content_digest itself (src/contracts/candidate.c).
@@ -189,7 +197,11 @@ class Contracts:
             proposed,
             constraint_array,
             len(constraint_ids),
-            deadline_ns if deadline_ns is not None else time.time_ns() + 5_000_000_000,
+            # deadline_ns is on usdk_monotonic_ns()'s clock, NOT wall-clock
+            # (include/usdk/candidate.h) - default to "monotonic-now plus a
+            # few seconds" via the real usdk_monotonic_ns(), not
+            # time.time_ns(), which is a different clock entirely.
+            deadline_ns if deadline_ns is not None else self._lib.usdk_monotonic_ns() + deadline_from_now_ns,
             C.byref(candidate),
         )
         if status != 0:

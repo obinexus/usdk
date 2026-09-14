@@ -1,0 +1,7 @@
+{
+  "name": "usdk-binding-lua",
+  "version": "0.1.0",
+  "private": true,
+  "description": "LuaJIT FFI bindings for the native USDK C ABI (perceive role only). UNTESTED - see README.md.",
+  "main": "usdk.lua"
+}

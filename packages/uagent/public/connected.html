@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>UAgent (Connected)</title>
+<link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+<a class="skip-link" href="#text-input">Skip to message input</a>
+
+<header>
+  <h1>UAgent - Connected mode</h1>
+  <p class="subtitle">Talks to an explicitly-started @usdk/host-local process over HTTP, instead of loading capabilities directly in this tab. See <a href="./index.html">the Browser-local demo</a> for the other execution profile - the two are never switched automatically.</p>
+</header>
+
+<div id="status-line" role="status" aria-live="polite">Not connected.</div>
+<div id="announcer" class="sr-only" role="status" aria-live="assertive"></div>
+
+<main>
+  <section aria-labelledby="connect-heading">
+    <h2 id="connect-heading">Connect to a local host</h2>
+    <p class="note">Start the host in a terminal first: <code>node -e "import('@usdk/host-local').then(m=&gt;m.startHostLocal())"</code>. It prints a pairing secret - copy it below. Neither field is ever pre-filled or embedded in this page's source.</p>
+    <form id="connect-form">
+      <label for="host-url-input">Host URL</label>
+      <input id="host-url-input" type="text" value="http://127.0.0.1:8421" autocomplete="off" />
+      <label for="pairing-input">Pairing secret</label>
+      <input id="pairing-input" type="text" autocomplete="off" placeholder="paste from the host process console" />
+      <button type="submit" id="connect-button">Connect</button>
+      <button type="button" id="disconnect-button" disabled>Disconnect</button>
+    </form>
+  </section>
+
+  <section aria-labelledby="conversation-heading">
+    <h2 id="conversation-heading">Conversation</h2>
+    <div id="transcript" role="log" aria-label="Conversation transcript" tabindex="0"></div>
+
+    <form id="text-form">
+      <label for="text-input">Message</label>
+      <input id="text-input" type="text" autocomplete="off" placeholder="Type a message" disabled />
+      <button type="submit" id="send-button" disabled>Send</button>
+    </form>
+  </section>
+
+  <section aria-labelledby="robotics-heading">
+    <h2 id="robotics-heading">Simulated robotics control</h2>
+    <p class="note">No physical hardware - a bounded, simulated movement, executed by the host process, not this tab. Each move still requires three-party approval before it runs.</p>
+    <div id="robotics-controls" role="group" aria-label="Robotics movement controls">
+      <button type="button" data-direction="forward" disabled>Move forward</button>
+      <button type="button" data-direction="backward" disabled>Move backward</button>
+      <button type="button" data-direction="left" disabled>Turn left</button>
+      <button type="button" data-direction="right" disabled>Turn right</button>
+    </div>
+    <button id="estop-button" type="button" class="estop" disabled>EMERGENCY STOP</button>
+    <div id="robotics-status" role="status" aria-live="polite"></div>
+  </section>
+</main>
+
+<script type="importmap">
+{
+  "imports": {
+    "@usdk/binding-javascript": "../../binding-javascript/src/index.mjs"
+  }
+}
+</script>
+<script type="module" src="./connected.mjs"></script>
+</body>
+</html>

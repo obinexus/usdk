@@ -1,5 +1,9 @@
 # USDK: keep packages/ source, manifests, lockfiles and research tracked.
 
+# Extracted reference archives (read-only, cited by docs/RESEARCH_REVIEW.md,
+# not part of USDK's own source - the original .zip files stay in Downloads/)
+/reference/
+
 # JavaScript dependencies and caches (all workspaces)
 node_modules/
 .npm/

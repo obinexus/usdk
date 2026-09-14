@@ -1,0 +1,137 @@
+@startuml usdk_uagent_components
+' Reconciles the task-supplied starting architecture (five capabilities -
+' LLM, voice, vision, accessibility, robotics - dynamically loaded inside
+' a browser environment, connected to a core system) with the actual
+' package names, dependency edges, and loading mechanism as built - see
+' docs/UAGENT_ARCHITECTURE.md and docs/UAGENT_PACKAGES.md for the prose
+' this diagram summarizes. The two-role split below (host-browser vs.
+' host-local) and the dynamic-vs-static-import distinction are new
+' engineering for this project, not present in the original prompt's
+' component sketch, which did not distinguish an execution profile.
+'
+' RENDERING UNVERIFIED: no local PlantUML CLI or plantuml.jar+Java was
+' found anywhere in this environment (checked directly - see
+' docs/VALIDATION.md); per this task's own instruction, this .puml
+' source ships as-is rather than downloading rendering tooling.
+
+skinparam componentStyle rectangle
+skinparam backgroundColor white
+
+package "packages/contracts" as contracts {
+  [Candidate / Vote / Status types]
+}
+
+package "packages/core" as core {
+  [Core: round state machine]
+  [MemoryJournal / FileJournal]
+}
+
+package "packages/loader" as loader {
+  [ManifestRegistry: resolve()]
+  [loadPlan(): dynamic import()]
+}
+
+package "Three roles (statically imported)" {
+  [perceive] as perceive
+  [deliberate] as deliberate
+  [verify] as verify
+}
+
+package "Five capability contracts" {
+  [capability-llm]
+  [capability-voice]
+  [capability-vision]
+  [capability-a11y]
+  [capability-robotics]
+}
+
+package "Drivers (dynamically import()-ed by name)" as drivers {
+  [driver-llm-fixture]
+  [driver-llm-local]
+  [driver-voice]
+  [driver-vision]
+  [driver-robotics-sim]
+}
+
+package "Browser-local profile" {
+  [host-browser: ConversationSession] as hostbrowser
+  [uagent: index.html / app.mjs] as uagentbrowserlocal
+}
+
+package "Connected profile" {
+  [host-local: HTTP+JSON server] as hostlocal
+  [binding-javascript: ConnectedSession] as bindingjs
+  [uagent: connected.html / connected.mjs] as uagentconnected
+  [usdk.exe (native CLI, spawned)] as usdkexe
+}
+
+package "Other language bindings (local process only)" {
+  [binding-python: ctypes] as bindingpy
+  [binding-lua: LuaJIT FFI] as bindinglua
+}
+
+contracts <.. core
+contracts <.. loader
+contracts <.. perceive
+contracts <.. deliberate
+contracts <.. verify
+contracts <.. "capability-llm"
+contracts <.. "capability-voice"
+contracts <.. "capability-vision"
+contracts <.. "capability-a11y"
+contracts <.. "capability-robotics"
+
+"capability-llm" <.. "driver-llm-fixture"
+"capability-llm" <.. "driver-llm-local"
+"capability-voice" <.. "driver-voice"
+"capability-vision" <.. "driver-vision"
+"capability-robotics" <.. "driver-robotics-sim"
+
+hostbrowser --> core : constructs
+hostbrowser --> loader : resolve() + loadPlan()
+hostbrowser --> perceive : static import
+hostbrowser --> deliberate : static import
+hostbrowser --> verify : static import
+loader ..> drivers : dynamic import()\n(manifest entry path)
+deliberate ..> "driver-llm-fixture" : injected (DI),\nnever imported directly
+core ..> "driver-voice" : dispatch fn (post-commit only)
+core ..> "driver-robotics-sim" : dispatch fn (post-commit only)
+
+uagentbrowserlocal --> hostbrowser : constructs, in-tab
+
+hostlocal --> hostbrowser : reuses ConversationSession\nunmodified (Node)
+hostlocal --> usdkexe : execFile (argv array,\nno shell) for\n/native/doctor,/native/inspect
+bindingjs --> hostlocal : fetch() over HTTP\n(pairing secret,\nbearer token,\nOrigin allowlist)
+uagentconnected --> bindingjs : constructs
+
+usdkexe ..> "native usdk_perceive.dll\nusdk_deliberate.dll\nusdk_verify.dll" : LoadLibraryExW/dlopen\n(real dynamic C-ABI loading)
+
+bindingpy ..> "native usdk_perceive.dll\nlibusdk_contracts.dll" : ctypes.CDLL\n(direct, in-process)
+bindinglua ..> "native usdk_perceive.dll\nlibusdk_contracts.dll" : LuaJIT ffi.load\n(direct, in-process -\nUNTESTED, no runtime\navailable in this environment)
+
+note right of hostlocal
+  Connected mode requires, per task
+  instruction: explicit pairing secret
+  (printed to host-local's own console,
+  never embedded in browser code),
+  Origin allowlist, per-session bearer
+  token, a fixed server-side manifest
+  set (never client-supplied), and a
+  usdk.exe module allowlist for
+  /native/inspect - see
+  docs/UAGENT_ARCHITECTURE.md
+  "Browser and native boundaries".
+end note
+
+note bottom of drivers
+  Only driver-robotics-sim ships -
+  simulated, no physical hardware.
+  driver-llm-fixture labels every
+  response "[fixture] ... not real
+  model inference" - see
+  docs/UAGENT_ARCHITECTURE.md
+  "Do not present fixture responses
+  as real model inference."
+end note
+
+@enduml

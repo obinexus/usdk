@@ -245,6 +245,83 @@ same four correct scenario outcomes as the build-tree run and
 directory only (`./usdk-demo-run-<pid>-<timestamp>`), never inside the
 install prefix.
 
+## UAgent browser extension validation
+
+See `docs/UAGENT_ARCHITECTURE.md` for what was built. This section
+records what was actually run to check it, per this project's existing
+standard of "write real code, then run it for real" (native validation
+above did the same).
+
+**Automated tests, run together, all passing at time of writing:**
+
+```bash
+npm install --offline                          # zero network access - internal workspace symlinks only
+npm test                                        # node --test packages/*/test/*.test.mjs
+```
+
+- 99 JS tests (`node --test`) across `contracts`, `core`, `loader`,
+  `perceive`, `deliberate`, `verify`, `capability-llm`,
+  `capability-robotics`, `driver-llm-fixture`, `driver-llm-local`,
+  `driver-voice` (incl. the `speak()` fallback-timeout regression, see
+  below), `driver-vision`, `driver-robotics-sim`, `host-browser`,
+  `host-local`, `binding-javascript`.
+- 8 Python tests (`python -m unittest tests.test_perceive`, run from a
+  real UCRT64 Python 3.14.7) against the actual
+  `build/bin/usdk_perceive.dll` and `libusdk_contracts.dll` - not a
+  mock; asserts the exact verdicts/reason codes
+  `tests/unit/test_perceive.c` already establishes natively.
+- All 16 native C tests (`ctest --test-dir build`) re-run after this
+  extension's work to confirm no regression to the underlying SDK - all
+  still passing.
+- `packages/binding-lua/usdk.lua` has **no** automated test - no
+  Lua/LuaJIT runtime exists anywhere in this environment (checked:
+  `which lua luajit lua5.1 lua5.3 lua5.4` all empty); see its own README.
+
+**Real, interactive browser verification (not simulated), both execution
+profiles, using this environment's actual browser-automation tooling:**
+
+- *Browser-local* (`packages/uagent/public/index.html`, served from
+  source): loaded capabilities confirmed in the DOM; a text turn
+  committed and displayed the fixture's labeled response; a robotics
+  action was approved and executed; a robotics action triggered mid-move
+  by clicking EMERGENCY STOP correctly showed "approved, but did not
+  complete" instead of a stale "approved and executed" (the regression
+  this session's own `session.test.mjs` 9th test now guards).
+- *Connected* (`packages/uagent/public/connected.html`, talking to a
+  real `@usdk/host-local` on a separate port): paired using the pairing
+  secret printed to the host process's own console; a text turn
+  committed over real HTTP with a real browser-supplied `Origin` header
+  correctly validated against the server's allowlist; a robotics action
+  was proposed, approved, and executed by the host process; emergency
+  stop engaged. Network log and DOM content both inspected directly, not
+  inferred.
+- *Built `dist/` output* (`npm run build && npm run serve`, then loaded
+  from `http://127.0.0.1:8422/...` - a location containing none of the
+  `packages/*/test` or `node_modules` structure the checkout has): all
+  three Browser-local capabilities loaded and a text turn committed
+  correctly, confirming the build script's output is genuinely
+  standalone-runnable, not just structurally plausible.
+
+**A real bug found only through this live testing, not through static
+reasoning**: the first live `dist/`-served text-turn attempt hung
+indefinitely at "Thinking… (not yet approved)". Root cause: `driver-voice`'s
+`speak()` awaited `speechSynthesis`'s `onend`/`onerror` callback with no
+fallback, and in this browser pane's rendering environment neither
+callback ever fired after `speechSynthesis.speak()` was called
+(`speechSynthesis.speaking` read back `false` - the utterance was
+dropped silently, not queued or erroring loudly) - a known class of
+issue in headless/audio-device-less browser contexts. This blocked
+`@usdk/core`'s post-commit dispatch from ever returning, which blocked
+the entire turn from resolving, even though the three-party vote had
+already committed. **Fixed** with a bounded fallback timeout
+(`DEFAULT_SPEAK_FALLBACK_TIMEOUT_MS = 15000` in
+`packages/driver-voice/src/index.mjs`) that calls `onDone()` regardless
+if neither browser callback fires in time; covered by two new
+regression tests (`driver-voice.test.mjs`) using a fake
+`speechSynthesis` that never fires either callback, and re-verified live
+in the same browser pane afterward (the turn now resolves, via the
+fallback, instead of hanging forever).
+
 ## Not tested (stated plainly)
 
 - Linux and macOS builds (see "Environment actually used" above).
@@ -258,3 +335,22 @@ install prefix.
   reopen - never with two processes actually running at once).
 - A real local-inference driver (none exists in this release - see
   `docs/IMPLEMENTATION_STATUS.md`).
+- `packages/binding-lua` against a real LuaJIT runtime - none exists in
+  this environment (see its README).
+- `packages/binding-python`/`binding-lua` binding `usdk-deliberate`,
+  `usdk-verify`, or `usdk-core` - only `usdk-perceive` is bound in this
+  release.
+- A real microphone/`SpeechRecognition` transcript in a live browser -
+  the browser-automation tooling used for the interactive verification
+  above does not provide real microphone audio input; `startVoiceInput`'s
+  wiring was exercised structurally (unit tests, `isAvailable()`
+  gating) but not with a genuine spoken utterance.
+- Cross-browser/cross-OS behavior of `speechSynthesis` - the fallback
+  timeout above was added because it failed silently in exactly one
+  browser-automation environment; whether other real browsers/OSes hit
+  the same failure mode was not separately checked.
+- Any TLS/HTTPS deployment of `@usdk/host-local` - it serves plain HTTP
+  on `127.0.0.1` only; see its README's "Known limitations."
+- Concurrent sessions against `@usdk/host-local` under real load (the
+  test suite exercises one session per test, sequentially - no
+  multi-session or high-concurrency test was run).

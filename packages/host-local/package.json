@@ -1,0 +1,14 @@
+{
+  "name": "@usdk/host-local",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Connected-mode local runtime host: an explicitly started Node.js process exposing a paired, session-authenticated HTTP API that a browser client (@usdk/binding-javascript) talks to. Reuses @usdk/host-browser's ConversationSession unmodified for the conversation/consensus logic (it is plain JS with no browser-only API dependency) and adds the transport, pairing/auth, and a bridge to the native usdk.exe CLI's dynamic C-ABI module loading for /native/* diagnostics - see README.md.",
+  "type": "module",
+  "main": "src/index.mjs",
+  "exports": { ".": "./src/index.mjs" },
+  "dependencies": {
+    "@usdk/contracts": "0.1.0",
+    "@usdk/host-browser": "0.1.0"
+  },
+  "engines": { "node": ">=20" }
+}

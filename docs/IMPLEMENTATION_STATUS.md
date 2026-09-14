@@ -38,11 +38,17 @@ own header doc comments and in `docs/ARCHITECTURE.md`'s table.
 match their documented responsibilities (`docs/PACKAGES.md`). One
 driver, `usdk-driver-fixture`, is implemented (**Deferred**: additional
 backends - see section 6 below). `usdk-cli` is implemented (section 7).
-`usdk-binding-<language>` is **Deferred**: not implemented in this
-release - the ABI is designed to make one straightforward
-(`docs/ABI.md`), but building an actual binding (Python/Node/etc.) was
-out of scope for the time available; nothing in the core, contracts, or
-role libraries assumes a binding exists.
+`usdk-binding-<language>` **update**: the UAgent browser extension
+(`docs/UAGENT_ARCHITECTURE.md`) added `packages/binding-python` (ctypes,
+`usdk-perceive` role only, 8 tests passing against the real
+`build/bin/usdk_perceive.dll` + `libusdk_contracts.dll`) and
+`packages/binding-lua` (LuaJIT FFI, same scope, **untested** - no
+Lua/LuaJIT runtime exists in this environment, see its README). Neither
+binds `usdk-deliberate`/`usdk-verify`/`usdk-core` yet - see
+`packages/binding-python/README.md` "Scope of this release." Still true
+as originally stated: nothing in the core, contracts, or role libraries
+assumes a binding exists - both bindings call the existing C ABI
+unmodified.
 
 The dependency graph is exactly as documented in `docs/PACKAGES.md`,
 including the `usdk-cli` exception explained there (a support package
@@ -235,6 +241,49 @@ All required files exist: `docs/RESEARCH_REVIEW.md`,
 file, public C headers under `include/usdk/`, `CMakeLists.txt` +
 `Makefile`, tests under `tests/`, the one driver under
 `src/driver_fixture/`, and examples under `examples/`.
+
+## 11. UAgent browser extension
+
+**Implemented, with stated gaps.** Full detail in
+`docs/UAGENT_ARCHITECTURE.md` and `docs/UAGENT_PACKAGES.md`; this
+section is a status summary only.
+
+- **Implemented and tested**: the full `packages/*` polyglot layer
+  (contracts/core/loader/three roles/five capability contracts/drivers/
+  host-browser/host-local/binding-javascript/uagent/devtools) - 99 JS
+  tests, all real dynamic-`import()` loading (not a stub beside
+  hardwired logic - `@usdk/loader` is the actual mechanism
+  `host-browser`/`host-local` use); `packages/binding-python` (8 tests
+  against the real native DLLs); a working `dist/` build, verified by
+  serving and loading it in a real browser outside the checkout; both
+  execution profiles (Browser-local, Connected) verified end-to-end in
+  a real interactive browser session, including a real bug
+  (`driver-voice`'s `speak()` hanging forever in one browser-automation
+  environment) found and fixed through that testing - see
+  `docs/VALIDATION.md` "UAgent browser extension validation".
+- **Deferred**: `packages/binding-lua` (written, believed correct by the
+  same review process that validated the Python binding's struct
+  layouts, but **not run** - no Lua/LuaJIT runtime exists anywhere in
+  this environment); binding `usdk-deliberate`/`usdk-verify`/`usdk-core`
+  in either binding (only `usdk-perceive` is bound); a real
+  local-inference LLM driver (`driver-llm-local` exists as a distinctly-
+  named slot, does not itself perform real inference); real camera-based
+  vision (`driver-vision` exists as a contract implementation, not
+  independently verified against a real camera feed in this
+  environment); physical robotics hardware (simulated only, by the
+  task's own explicit instruction).
+- **Not tested** (see `docs/VALIDATION.md` for the full list): a real
+  spoken microphone utterance in a live browser (the automation tooling
+  available here does not provide real audio input); TLS/HTTPS for
+  `@usdk/host-local`; concurrent-session load on `@usdk/host-local`;
+  cross-browser/cross-OS `speechSynthesis` behavior beyond the one
+  environment where the hang above was found and fixed.
+- **No UAgent prior art was available to integrate against**: the
+  supplied local path for `github.com/obinexus/uagent` contained zero
+  files (`docs/RESEARCH_REVIEW.md` section 6) - everything under
+  `packages/uagent` and the host/binding packages around it is
+  independent engineering for this task, not integration with an
+  existing UAgent codebase.
 
 ## Summary: what the supplied research supports vs. what remains unresolved
 

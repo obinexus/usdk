@@ -1,0 +1,10 @@
+{
+  "name": "@usdk/binding-javascript",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Browser-side HTTP client for the Connected execution profile's @usdk/host-local. Zero dependencies - built-in fetch only, no bundler-specific API. Distinct from @usdk/host-browser's ConversationSession by design (see README.md 'Never silently switch profiles') - a UI picks one explicitly.",
+  "type": "module",
+  "main": "src/index.mjs",
+  "exports": { ".": "./src/index.mjs" },
+  "engines": { "node": ">=20" }
+}

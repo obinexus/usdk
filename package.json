@@ -11,6 +11,7 @@
   },
   "scripts": {
     "test": "node --test packages/*/test/*.test.mjs",
+    "dev": "node packages/devtools/src/serve-dev.mjs",
     "build": "node packages/devtools/src/build-dist.mjs",
     "serve": "node packages/devtools/src/serve-dist.mjs",
     "devtools": "node packages/devtools/src/cli.mjs"

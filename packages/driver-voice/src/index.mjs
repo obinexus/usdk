@@ -25,7 +25,22 @@ function hasSpeechSynthesis() {
   return typeof globalThis.speechSynthesis === 'object' && typeof globalThis.SpeechSynthesisUtterance === 'function';
 }
 
-export function create() {
+// A real failure mode, reproduced directly while testing this driver in
+// an actual browser pane: some browser/OS/headless combinations never
+// fire `onend` or `onerror` after `speechSynthesis.speak()` at all (no
+// audio output device, no TTS voice actually installed despite
+// `getVoices()` returning entries, etc.) - `speaking` silently goes back
+// to `false` but neither callback runs. Without a fallback, the awaited
+// Promise in @usdk/host-browser's dispatch function
+// (`await new Promise((resolve) => voiceDriver.speak(...))`) hangs
+// forever, which blocks usdk-core's post-commit dispatch from ever
+// returning - the round already committed, but the UI never learns
+// that, and stays on "Thinking..." permanently. See
+// docs/UAGENT_ARCHITECTURE.md "Voice, accessibility, and conversation".
+const DEFAULT_SPEAK_FALLBACK_TIMEOUT_MS = 15000;
+
+export function create(options = {}) {
+  const speakFallbackTimeoutMs = options.speakFallbackTimeoutMs ?? DEFAULT_SPEAK_FALLBACK_TIMEOUT_MS;
   const RecognitionCtor = globalThis.SpeechRecognition ?? globalThis.webkitSpeechRecognition;
   /** @type {SpeechSynthesisUtterance | null} */
   let currentUtterance = null;
@@ -67,14 +82,26 @@ export function create() {
         return () => {};
       }
       const utterance = new SpeechSynthesisUtterance(text);
-      utterance.onend = () => { currentUtterance = null; onDone(); };
-      utterance.onerror = () => { currentUtterance = null; onDone(); };
+      let finished = false;
+      let fallbackTimer;
+      const finish = () => {
+        if (finished) return;
+        finished = true;
+        clearTimeout(fallbackTimer);
+        currentUtterance = null;
+        onDone();
+      };
+      utterance.onend = finish;
+      utterance.onerror = finish;
+      // See DEFAULT_SPEAK_FALLBACK_TIMEOUT_MS above - guards against
+      // onend/onerror never firing at all.
+      fallbackTimer = setTimeout(finish, speakFallbackTimeoutMs);
       currentUtterance = utterance;
       globalThis.speechSynthesis.speak(utterance);
       return () => {
         if (currentUtterance === utterance) {
           globalThis.speechSynthesis.cancel();
-          currentUtterance = null;
+          finish();
         }
       };
     },
