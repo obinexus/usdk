@@ -1,0 +1,11 @@
+{
+  "name": "@usdk/capability-voice",
+  "version": "0.1.0",
+  "private": true,
+  "description": "The capability-voice interface contract: microphone -> transcription and approved-text -> speech synthesis, as a replaceable pipeline (PDF Hypothesis III, page 4, 'Voice Interface'). Contains no implementation - see @usdk/driver-voice for the Web Speech API-backed browser driver, and its README for exactly which stages are local vs. a browser/cloud service (do not assume offline - see docs/UAGENT_ARCHITECTURE.md).",
+  "type": "module",
+  "main": "src/index.mjs",
+  "exports": { ".": "./src/index.mjs" },
+  "dependencies": { "@usdk/contracts": "0.1.0" },
+  "engines": { "node": ">=20" }
+}

@@ -1,0 +1,9 @@
+{
+  "name": "@usdk/devtools",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Developer commands: a zero-dependency static file server (dev mode - serves packages/ directly, no build step, so ES modules resolve exactly as written) and the dist/ build script (copies the browser-relevant files into dist/ for distribution - see docs/UAGENT_ARCHITECTURE.md 'DO NOT EJECT'). Uses only Node built-in modules.",
+  "type": "module",
+  "bin": { "usdk-devtools": "src/cli.mjs" },
+  "engines": { "node": ">=20" }
+}

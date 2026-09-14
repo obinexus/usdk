@@ -1,0 +1,11 @@
+{
+  "name": "@usdk/verify",
+  "version": "0.1.0",
+  "private": true,
+  "description": "usdk-verify, in JS: independently checks a candidate against declared constraints and evidence sufficiency. Distinct check: (1) every constraint must be in this instance's allowed_constraints policy, (2) every evidence_ref's uncertainty must be within policy, (3) at least one evidence_ref must be present. Neither threshold is claimed as derived/proven - see docs/RESEARCH_REVIEW.md section 1.3.5/5.4 on why no such threshold is imported as a proven constant. Depends only on @usdk/contracts.",
+  "type": "module",
+  "main": "src/index.mjs",
+  "exports": { ".": "./src/index.mjs" },
+  "dependencies": { "@usdk/contracts": "0.1.0" },
+  "engines": { "node": ">=20" }
+}

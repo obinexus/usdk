@@ -1,0 +1,12 @@
+{
+  "name": "@usdk/uagent",
+  "version": "0.1.0",
+  "private": true,
+  "description": "The browser-facing UAgent conversation application: a static HTML/CSS/JS page (no build step required to run it in dev mode - native ES modules, dynamically imported by @usdk/host-browser) implementing the accessible text+voice conversation interface, trilateral-approval status display, and a simulated robotics control panel. See docs/UAGENT_ARCHITECTURE.md.",
+  "dependencies": {
+    "@usdk/host-browser": "0.1.0",
+    "@usdk/driver-llm-fixture": "0.1.0",
+    "@usdk/driver-voice": "0.1.0",
+    "@usdk/driver-robotics-sim": "0.1.0"
+  }
+}

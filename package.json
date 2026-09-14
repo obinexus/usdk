@@ -1,0 +1,18 @@
+{
+  "name": "usdk-workspace",
+  "private": true,
+  "version": "0.1.0",
+  "description": "USDK polyglot workspace - JavaScript/Python/Lua scripting packages under packages/, plus the native C SDK (CMakeLists.txt/Makefile) as infrastructure. No external npm dependencies anywhere in this workspace - see docs/UAGENT_ARCHITECTURE.md 'Why zero dependencies'.",
+  "workspaces": [
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test packages/*/test/*.test.mjs",
+    "build": "node packages/devtools/src/build-dist.mjs",
+    "serve": "node packages/devtools/src/serve-dist.mjs",
+    "devtools": "node packages/devtools/src/cli.mjs"
+  }
+}

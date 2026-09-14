@@ -1,0 +1,11 @@
+{
+  "name": "@usdk/capability-robotics",
+  "version": "0.1.0",
+  "private": true,
+  "description": "The capability-robotics interface contract (PDF Hypothesis III, page 4, 'Robotics Interface'). Movements are structured, bounded actions, validated at proposal time AND again at execution time; emergencyStop() bypasses deliberation entirely and cancels pending movement - see @usdk/driver-robotics-sim and docs/UAGENT_ARCHITECTURE.md 'Robotics'.",
+  "type": "module",
+  "main": "src/index.mjs",
+  "exports": { ".": "./src/index.mjs" },
+  "dependencies": { "@usdk/contracts": "0.1.0" },
+  "engines": { "node": ">=20" }
+}

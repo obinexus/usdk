@@ -1,0 +1,11 @@
+{
+  "name": "@usdk/capability-a11y",
+  "version": "0.1.0",
+  "private": true,
+  "description": "The capability-a11y interface contract (PDF Hypothesis III, page 4, 'Accessibility Features'). Unlike the other four capabilities, accessibility is ALWAYS available at the interface level and must not depend on successful microphone/vision/robotics/model loading - @usdk/uagent wires a conforming implementation directly, not through @usdk/loader's optional-capability path, precisely so a loader/driver failure elsewhere can never take accessibility down with it.",
+  "type": "module",
+  "main": "src/index.mjs",
+  "exports": { ".": "./src/index.mjs" },
+  "dependencies": { "@usdk/contracts": "0.1.0" },
+  "engines": { "node": ">=20" }
+}

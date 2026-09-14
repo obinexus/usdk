@@ -1,0 +1,11 @@
+{
+  "name": "@usdk/driver-robotics-sim",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A simulated robotics driver - no physical hardware. Represents proposed movements as structured, bounded actions (see @usdk/capability-robotics), re-validates bounds at execution time, and implements a real emergencyStop() that bypasses deliberation and cancels pending movement. Physical hardware integration would require a separate, explicit driver with device capabilities/connection permissions/limits/acknowledgement rules - not implemented here, see docs/IMPLEMENTATION_STATUS.md.",
+  "type": "module",
+  "main": "src/index.mjs",
+  "exports": { ".": "./src/index.mjs" },
+  "dependencies": { "@usdk/contracts": "0.1.0", "@usdk/capability-robotics": "0.1.0" },
+  "engines": { "node": ">=20" }
+}

@@ -1,0 +1,11 @@
+{
+  "name": "@usdk/perceive",
+  "version": "0.1.0",
+  "private": true,
+  "description": "usdk-perceive, in JS: converts incoming information into structured observations and evidence-bearing context, and represents uncertainty and missing evidence. Distinct check: every evidence_ref on a candidate must match an observation this instance actually recorded - see docs/UAGENT_ARCHITECTURE.md. Depends only on @usdk/contracts; never imports @usdk/deliberate or @usdk/verify.",
+  "type": "module",
+  "main": "src/index.mjs",
+  "exports": { ".": "./src/index.mjs" },
+  "dependencies": { "@usdk/contracts": "0.1.0" },
+  "engines": { "node": ">=20" }
+}

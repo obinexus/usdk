@@ -1,0 +1,19 @@
+{
+  "name": "@usdk/host-browser",
+  "version": "0.1.0",
+  "private": true,
+  "description": "The browser-local execution profile's host: resolves manifests, dynamically imports capability modules (@usdk/loader), constructs the three roles (@usdk/perceive, @usdk/deliberate, @usdk/verify) and @usdk/core, and runs the full conversation turn lifecycle. Approved text is spoken and approved robotics actions execute ONLY through usdk-core's post-commit dispatch gate - see docs/UAGENT_ARCHITECTURE.md 'Ensure external effects pass through the agreement gate.' Accessibility is wired directly, not through the optional-capability loader path, so it never depends on another capability's successful load.",
+  "type": "module",
+  "main": "src/index.mjs",
+  "exports": { ".": "./src/index.mjs" },
+  "dependencies": {
+    "@usdk/contracts": "0.1.0",
+    "@usdk/core": "0.1.0",
+    "@usdk/loader": "0.1.0",
+    "@usdk/perceive": "0.1.0",
+    "@usdk/deliberate": "0.1.0",
+    "@usdk/verify": "0.1.0",
+    "@usdk/capability-robotics": "0.1.0"
+  },
+  "engines": { "node": ">=20" }
+}

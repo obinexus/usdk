@@ -801,3 +801,186 @@ chapter is in-narrative flavor text for a hypothetical human system
 operator, not addressed to an AI. Both are cited above in their
 respective sections' "prompt-injection check" subsections with exact
 paths.
+
+---
+
+## 5. `Unbiased_AI.pdf` (primary source, read directly for the UAgent extension)
+
+Supplied directly for the browser/UAgent extension task (not part of the
+original three archives above). Title: "Formal Argument for Bias in AI
+Systems: Bayesian Modeling as a Proof Mechanism," Nnamdi M. Okpala,
+OBINexus Computing, May 4, 2025. 7 pages. Read directly, page by page,
+rather than via a derivative Markdown/text conversion - the exact
+Markdown/text derivatives of this same paper were already reviewed in
+section 1 (`obiai-main`/`obi-sdk-main` both carry copies titled "A
+Bayesian Network Framework for Mitigating Bias in ML" / "Formal Argument
+for Bias in AI System(s)"); this section supersedes those for anything
+the primary PDF itself actually contains, and separately flags one place
+a derivative diverged from the primary source (5.6 below).
+
+### 5.1 Page 4 - Hypothesis III: Modular System Architecture (the basis for USDK's five-capability extension)
+
+Figure 4 shows a "Base LLM Module" at the center of a "Browser
+Environment" boundary, connected by "Dynamic Load" edges to Voice
+Interface, Vision Module, Accessibility Features, and Robotics
+Interface - five named modules, explicitly inside a browser deployment
+context. Algorithm 3 ("Dynamic Module Loading"), reproduced here in full
+since it is short enough to check completely:
+
+> Input: Module requirements; Initialize core LLM module; for each
+> required feature: identify module from directory tree, load module
+> dynamically, connect to core system, validate integration; end for;
+> optimize performance based on loaded modules; return configured
+> modular system.
+
+**Checked directly**: this is 8 lines of pseudocode with no complexity
+analysis, no correctness argument, no stated preconditions/
+postconditions beyond the prose, and no reference to any test, benchmark,
+or implementation anywhere in this document. "Validate integration"
+(line 7) is not defined - validate against what criteria is never
+stated. **Classification: Proposal/hypothesis**, not a measured or
+proven result - the paper's own section number ("Hypothesis III") already
+says as much, and this reading confirms the content matches that label
+rather than overclaiming it.
+
+**What this responsibly becomes an implementation requirement for**: the
+five capability names (LLM, voice, vision, accessibility, robotics) and
+the "browser environment, dynamically loaded, connected to a core
+system" shape directly motivate USDK's `capability-llm`/`capability-voice`/
+`capability-vision`/`capability-a11y`/`capability-robotics` contracts and
+the `host-browser`/`loader` split (`docs/UAGENT_ARCHITECTURE.md`). The
+*mechanism* by which loading happens (a real manifest-driven dependency
+resolver with cycle/version detection, ABI/version negotiation before
+first use, explicit capability-registry replacement) is new engineering
+for this project, not derived from Algorithm 3 - the algorithm names the
+five steps but specifies none of their actual failure modes (a
+version mismatch, a missing export, a cyclic dependency, a host lacking
+a required capability), which is exactly the gap USDK's loader fills.
+
+### 5.2 Page 5 - Bayesian Network Implementation
+
+Figure 5 and the accompanying equation:
+
+> P(T|S, C, A) = P(T|C, S) times P'(A)
+
+propose a factorization where a "Test" outcome node depends on
+"legitimate" causes (Smoking, Cancer) through one term and on a
+"Protected Attribute" A through a separate multiplicative correction
+term P'(A), labeled "Bias Path" in the figure. **Checked directly**: no
+derivation is given for why this specific factorization correctly
+isolates "bias" from "legitimate" causal influence in general, why the
+bias term must be multiplicative rather than additive or some other
+form, or what P'(A) actually is (its definition is not given anywhere in
+the document). This is a **Definition/Proposal** - a modeling
+convention this paper adopts - not a proven property of Bayesian
+networks in general, and it is presented without the qualification that
+it is one particular, unjustified choice among possible ways to
+structure a "debiasing" factorization.
+
+### 5.3 Page 5-6 - "Formal Proof Framework" (checked against the paper's own title claim)
+
+Two equations are given:
+
+> Traditional: theta* = argmax_theta P(theta|D) approximately biased optimum
+> Bayesian: P(theta|D) = integral P(theta,phi|D) d(phi)
+
+**Checked directly, this is the central finding of this section**: the
+second equation (and its full derivation via Bayes' rule in Appendix A,
+page 7) is a **correct, standard identity** - the law of total
+probability applied to marginalize out a nuisance parameter phi from a
+posterior. It is textbook Bayesian statistics (`Gelman et al., Bayesian
+Data Analysis`, cited as reference [4]), not a novel result, and nothing
+about it is wrong. The first equation - that a traditional MAP/point
+estimate "approximately biased optimum" - is **asserted, not derived**:
+no argument connects point-estimation to bias in this document; it reads
+as a labeling choice on the diagram (Figure 6) rather than a proven
+consequence. **This means the paper's own title, "Bayesian Modeling as a
+Proof Mechanism," is not fully earned by its content**: what is actually
+proven is a standard marginalization identity; what is claimed but not
+proven is that performing this marginalization over a "bias parameter"
+necessarily produces fairness or reduces disparity - that further,
+substantive claim is exactly what Table 1 (5.4 below) asserts without
+derivation. **Classification**: the marginalization identity itself is a
+**Mathematical claim with reviewed proof** (correct, standard, and its
+own appendix derivation checks out); "therefore bias is addressed" is an
+**Unsupported claim** layered on top of a correct but unrelated-to-bias
+mathematical fact.
+
+### 5.4 Page 6 - Table 1, "Expected Outcomes" (qualitative, not the numeric claims found in a derivative document)
+
+Table 1 compares "Traditional" vs. "Bayesian" across five metrics
+(Demographic Fairness, Transparency, Uncertainty Quantification,
+Performance Disparity, Regulatory Compliance), each rated only with
+**qualitative** labels: Low/High, None/Complete, None/Explicit,
+High/Reduced, Difficult/Auditable. **Checked directly**: no dataset,
+experiment, or citation backs any of these five ratings; the section is
+titled "Expected Outcomes," not "Measured Outcomes" or "Results," which
+is itself an honest label the rest of this review takes at face value.
+**Classification: Unsupported claim** (as qualitative comparative
+assertions, not measurements) - but notably **not** the specific
+unsourced percentage figures ("85% improvement," "35% to 5% misdiagnosis
+rate") that section 1.3.6/1.3.8 of this document found in a *derivative*
+compendium (`obi-sdk/docs/peer-review/OBI - Ontological Baysian
+Intelligence Full File 15 MAY 2026.md`). **This is worth stating
+precisely**: this primary PDF's own overclaiming is the milder,
+qualitative form; the specific fabricated-looking percentages found
+earlier were added somewhere in a later derivative document, not present
+in the original paper reviewed here. Neither is used by USDK as a
+proven number, per section 4.2's existing synthesis.
+
+### 5.5 Pages 2-3 - Hypotheses I and II (checked, not separately load-bearing for the UAgent extension)
+
+Hypothesis I (page 2) restates ordinary empirical-risk-minimization
+supervised learning (`f(x) approximately argmax_y P(y|x;theta)`,
+Algorithm 1 is a generic training loop) with a "Feedback Loop" arrow
+asserting bias amplification; no amplification bound or proof is given
+anywhere in the document - **Proposal/hypothesis**, not proven.
+Hypothesis II (page 3, "Unboxing Through Data Structure Awareness", 4D
+tensor -> k-NN clustering -> 3D map -> "semantic understanding") matches,
+almost exactly, the "structural unboxing" concept independently found in
+section 1.3's review of `obiai-main`: that repository's own
+`docs/traceability.md` explicitly marks the corresponding implementation
+**Deferred** ("nothing implements it and nothing should until it is
+specified"). This document gives no additional specification beyond
+what was already found insufficient there - **Proposal/hypothesis**,
+corroborating rather than resolving the earlier finding. Neither
+hypothesis is used as a design basis for the UAgent extension
+(`docs/UAGENT_ARCHITECTURE.md`); only Hypothesis III (5.1) and,
+negatively, the Table 1/title gap (5.3-5.4) are.
+
+### 5.6 What this section changes about the existing synthesis
+
+Section 4.2's list of claims USDK does not import as proven is extended
+by exactly one item, stated precisely: **this PDF's own title claim**
+("Bayesian Modeling as a Proof Mechanism" for bias) **is not fully
+supported by this PDF's own content** - the mechanism it actually proves
+(marginalization) is real and correct; that the mechanism resolves bias
+is asserted, not derived, in the same document. No other finding in
+sections 1-4 is revised by reading this primary source directly; if
+anything, reading the primary source narrowed one earlier finding (the
+unsourced percentage figures belong to a derivative document, not this
+paper) rather than widening it.
+
+---
+
+## 6. UAgent reference source: absent, checked directly
+
+`C:\Users\Nnamdi\Projects\uagent\` (the supplied local path corresponding
+to `github.com/obinexus/uagent`) contains **zero files** - confirmed
+directly (`ls -la` returns only `.`/`..`). No UAgent source, README,
+package manifest, or prior integration code exists anywhere in the
+working environment for this task. Per this task's own instruction ("If
+UAgent source is missing, complete the independent architecture and
+implementation work and identify the missing integration evidence"),
+`docs/UAGENT_ARCHITECTURE.md` and the `packages/uagent` implementation
+that follows are **independent engineering for this project**, informed
+by this PDF (section 5) and by USDK's own existing C SDK
+(`docs/ARCHITECTURE.md` through `docs/VALIDATION.md`), not by any actual
+UAgent prior art - because none was available to review. **Missing
+integration evidence, stated precisely**: UAgent's actual (if any)
+existing wire protocol, UI conventions, package naming, prior
+browser/native boundary decisions, and any prior test suite are all
+unknown and unverifiable from this environment. Nothing in
+`docs/UAGENT_ARCHITECTURE.md` should be read as compatible with a real
+`github.com/obinexus/uagent` codebase unless and until that source is
+actually supplied and reviewed.

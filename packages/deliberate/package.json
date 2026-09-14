@@ -1,0 +1,11 @@
+{
+  "name": "@usdk/deliberate",
+  "version": "0.1.0",
+  "private": true,
+  "description": "usdk-deliberate, in JS: produces a candidate response using an INJECTED capability-llm driver (never imported directly - the host/loader resolves and constructs the driver, then passes it to create(); see docs/UAGENT_ARCHITECTURE.md 'Modularity': 'Drivers implement capabilities; they do not decide whether actions commit', and roles depend on shared contracts, not on a concrete driver package). Distinct check: self-consistency - a candidate is only accepted if its proposed_response matches something this instance actually produced via propose(). Depends only on @usdk/contracts.",
+  "type": "module",
+  "main": "src/index.mjs",
+  "exports": { ".": "./src/index.mjs" },
+  "dependencies": { "@usdk/contracts": "0.1.0" },
+  "engines": { "node": ">=20" }
+}

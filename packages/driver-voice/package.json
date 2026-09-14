@@ -1,0 +1,11 @@
+{
+  "name": "@usdk/driver-voice",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Browser-local capability-voice driver, backed by the Web Speech API (SpeechRecognition/SpeechSynthesis). IMPORTANT: in Chrome-family browsers, SpeechRecognition typically sends microphone audio to a cloud speech-to-text service - this is NOT offline, and this package does not claim otherwise anywhere (see the README and docs/UAGENT_ARCHITECTURE.md 'Voice, accessibility, and conversation'). Browser-only: importing this module outside a browser (no window.SpeechRecognition) makes isAvailable() return false rather than throwing, so a host can fail over to the text-only path.",
+  "type": "module",
+  "main": "src/index.mjs",
+  "exports": { ".": "./src/index.mjs" },
+  "dependencies": { "@usdk/contracts": "0.1.0", "@usdk/capability-voice": "0.1.0" },
+  "engines": { "node": ">=20" }
+}

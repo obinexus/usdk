@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>UAgent</title>
+<link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+<a class="skip-link" href="#text-input">Skip to message input</a>
+
+<header>
+  <h1>UAgent</h1>
+  <p class="subtitle">A trilateral-approved conversational agent - browser-local demo. Every response is approved by three independent checks before it is shown or spoken.</p>
+</header>
+
+<div id="status-line" role="status" aria-live="polite">Loading capabilities&hellip;</div>
+<div id="announcer" class="sr-only" role="status" aria-live="assertive"></div>
+
+<main>
+  <section aria-labelledby="conversation-heading">
+    <h2 id="conversation-heading">Conversation</h2>
+    <div id="transcript" role="log" aria-label="Conversation transcript" tabindex="0"></div>
+
+    <form id="text-form">
+      <label for="text-input">Message</label>
+      <input id="text-input" type="text" autocomplete="off" placeholder="Type a message" />
+      <button type="submit" id="send-button">Send</button>
+    </form>
+
+    <div id="voice-controls" role="group" aria-label="Voice controls">
+      <button id="mic-button" type="button" aria-pressed="false">Start listening</button>
+      <button id="mute-button" type="button" aria-pressed="false">Mute spoken responses</button>
+      <button id="cancel-button" type="button">Cancel current turn</button>
+    </div>
+    <p id="voice-fallback-note" class="note" hidden>Speech features are not available in this browser - text works fully on its own.</p>
+  </section>
+
+  <section aria-labelledby="robotics-heading">
+    <h2 id="robotics-heading">Simulated robotics control</h2>
+    <p class="note">No physical hardware - a bounded, simulated movement. Each move still requires three-party approval before it runs. Emergency stop does not wait for approval.</p>
+    <div id="robotics-controls" role="group" aria-label="Robotics movement controls">
+      <button type="button" data-direction="forward">Move forward</button>
+      <button type="button" data-direction="backward">Move backward</button>
+      <button type="button" data-direction="left">Turn left</button>
+      <button type="button" data-direction="right">Turn right</button>
+    </div>
+    <button id="estop-button" type="button" class="estop">EMERGENCY STOP</button>
+    <div id="robotics-status" role="status" aria-live="polite"></div>
+  </section>
+
+  <section aria-labelledby="capabilities-heading">
+    <h2 id="capabilities-heading">Loaded capabilities</h2>
+    <ul id="capability-list"></ul>
+  </section>
+</main>
+
+<script type="importmap">
+{
+  "imports": {
+    "@usdk/contracts": "../../contracts/src/index.mjs",
+    "@usdk/core": "../../core/src/index.mjs",
+    "@usdk/loader": "../../loader/src/index.mjs",
+    "@usdk/perceive": "../../perceive/src/index.mjs",
+    "@usdk/deliberate": "../../deliberate/src/index.mjs",
+    "@usdk/verify": "../../verify/src/index.mjs",
+    "@usdk/host-browser": "../../host-browser/src/index.mjs",
+    "@usdk/capability-llm": "../../capability-llm/src/index.mjs",
+    "@usdk/capability-voice": "../../capability-voice/src/index.mjs",
+    "@usdk/capability-robotics": "../../capability-robotics/src/index.mjs"
+  }
+}
+</script>
+<script type="module" src="./app.mjs"></script>
+</body>
+</html>
