@@ -1,0 +1,8 @@
+{
+  "name": "usdk-perceive",
+  "version_major": 0,
+  "version_minor": 1,
+  "role": "perceive",
+  "artifact_path": "usdk_perceive",
+  "dependencies": []
+}

@@ -1,0 +1,35 @@
+# Supplied research archives, extracted for local reading only - not
+# USDK's own source, not versioned (large: ~4500 files across three
+# archives). See docs/RESEARCH_REVIEW.md for what was reviewed there.
+reference/
+
+build/
+build-*/
+install/
+install_*/
+out/
+
+*.o
+*.obj
+*.exe
+*.dll
+*.dll.a
+*.so
+*.so.*
+*.dylib
+*.a
+*.lib
+*.pdb
+*.ilk
+
+usdk-run/
+usdk-run-*/
+usdk-demo-run*/
+*.log
+
+__pycache__/
+*.pyc
+
+.vs/
+.vscode/
+*.user

@@ -1,0 +1,8 @@
+{
+  "name": "usdk-verify",
+  "version_major": 0,
+  "version_minor": 1,
+  "role": "verify",
+  "artifact_path": "usdk_verify",
+  "dependencies": []
+}

@@ -1,0 +1,10 @@
+{
+  "name": "usdk-deliberate",
+  "version_major": 0,
+  "version_minor": 1,
+  "role": "deliberate",
+  "artifact_path": "usdk_deliberate",
+  "dependencies": [
+    {"capability": "usdk-driver-fixture", "min_version_major": 0, "min_version_minor": 1}
+  ]
+}

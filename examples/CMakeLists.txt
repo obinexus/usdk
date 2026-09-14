@@ -1,0 +1,4 @@
+add_subdirectory(perceive_standalone)
+add_subdirectory(deliberate_standalone)
+add_subdirectory(verify_standalone)
+add_subdirectory(trilateral_integration)

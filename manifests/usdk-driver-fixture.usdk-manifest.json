@@ -1,0 +1,8 @@
+{
+  "name": "usdk-driver-fixture",
+  "version_major": 0,
+  "version_minor": 1,
+  "role": "driver",
+  "artifact_path": "usdk_driver_fixture",
+  "dependencies": []
+}
