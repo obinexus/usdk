@@ -88,6 +88,7 @@ all: build
 # --------------------------------------------------------------------------
 
 configure:
+	$(CMAKE) -DUSDK_CHECK_DIR="$(BUILD_DIR)" -P cmake/CheckBuildEnv.cmake
 	$(CMAKE) -S . -B "$(BUILD_DIR)" $(CONFIGURE_GENERATOR_FLAG) -DCMAKE_BUILD_TYPE="$(BUILD_TYPE)"
 
 # --------------------------------------------------------------------------

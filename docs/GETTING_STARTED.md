@@ -17,6 +17,12 @@ pacman -S --needed mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-cmake mingw-w
 
 ## Build and test
 
+Run `make` from a real MSYS2 UCRT64 shell - launch it as
+`C:\msys64\ucrt64.exe` (or the "MSYS2 UCRT64" Start Menu shortcut), not
+plain PowerShell/cmd, even if `C:\msys64\ucrt64\bin` happens to be on
+that shell's `PATH` - see "If `make` warns about a toolchain/shell
+mismatch" below for why that distinction matters.
+
 ```bash
 make
 make test
@@ -32,6 +38,36 @@ ctest --test-dir build --output-on-failure
 
 `make help` lists every target and overridable variable
 (`BUILD_DIR`, `BUILD_TYPE`, `GENERATOR`, `INSTALL_PREFIX`, `JOBS`).
+
+### If `make` warns about a toolchain/shell mismatch
+
+`make`'s `configure` target runs `cmake/CheckBuildEnv.cmake` before
+touching `BUILD_DIR`, and prints a `WARNING` if that directory already
+has a cache configured with an MSYS2/MinGW compiler (ucrt64/mingw64/
+clang64/msys64 in its path) while the *current* shell has no MSYS2
+environment active (`MSYSTEM` unset). If you see that warning and then a
+compile failure like:
+
+```
+-- Check for working C compiler: C:/msys64/ucrt64/bin/cc.exe - broken
+CMake Error ... is not able to compile a simple test program.
+```
+
+this is that exact mismatch: **having `C:\msys64\ucrt64\bin` on `PATH`
+is not the same as running inside an activated MSYS2 shell.** The
+compiler driver (`cc.exe`) can still run standalone from an ordinary
+PowerShell/cmd session (`cc --version` works), but the real compiler
+back end it execs needs runtime DLLs that are only on `PATH` inside a
+shell actually launched as MSYS2 UCRT64 - so configuring succeeds (CMake
+just checks the cached path exists) but the first real compile fails,
+with no useful message pointing at the cause. Two ways to fix it:
+
+1. **Run `make` from a real MSYS2 UCRT64 shell** -
+   `C:\msys64\ucrt64.exe`, or the "MSYS2 UCRT64" Start Menu shortcut -
+   not plain PowerShell/cmd, even one with `ucrt64\bin` on `PATH`.
+2. **Or build into a separate directory** for whatever toolchain your
+   current shell actually has working, e.g. `make BUILD_DIR=build-msvc`
+   if you have Visual Studio's `cl.exe` available instead.
 
 ## Run the demo
 
