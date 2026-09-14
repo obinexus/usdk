@@ -1,4 +1,5 @@
 import { ConversationSession } from '@usdk/host-browser';
+import { loadModel as loadLocalModel, MODEL_ID as LOCAL_MODEL_ID } from '@usdk/driver-llm-local';
 
 const el = {
   status: document.getElementById('status-line'),
@@ -15,6 +16,11 @@ const el = {
   estopButton: document.getElementById('estop-button'),
   roboticsStatus: document.getElementById('robotics-status'),
   capabilityList: document.getElementById('capability-list'),
+  startButton: document.getElementById('start-button'),
+  modelLoadStatus: document.getElementById('model-load-status'),
+  conversationSection: document.getElementById('conversation-section'),
+  roboticsSection: document.getElementById('robotics-section'),
+  capabilitiesSection: document.getElementById('capabilities-section'),
 };
 
 /** capability-a11y, wired directly (not through @usdk/loader) so it
@@ -52,28 +58,36 @@ function addTranscriptEntry(who, text, cls = '') {
 
 const manifests = [
   { name: 'driver-llm-fixture', version: '0.1', kind: 'llm', entry: '../../driver-llm-fixture/src/index.mjs', dependencies: [] },
+  { name: 'driver-llm-local', version: '0.1', kind: 'llm', entry: '../../driver-llm-local/src/index.mjs', dependencies: [] },
   { name: 'driver-voice', version: '0.1', kind: 'voice', entry: '../../driver-voice/src/index.mjs', dependencies: [] },
   { name: 'driver-robotics-sim', version: '0.1', kind: 'robotics', entry: '../../driver-robotics-sim/src/index.mjs', dependencies: [] },
 ];
 
-const session = new ConversationSession({
-  sessionId: `uagent-${Date.now()}`,
-  manifests,
-  baseUrl: import.meta.url,
-  llmManifestName: 'driver-llm-fixture',
-  voiceManifestName: 'driver-voice',
-  roboticsManifestName: 'driver-robotics-sim',
-  a11y,
-  allowedConstraints: ['workspace:temp-only', 'robotics:bounded-move'],
-  maxUncertainty: 0.5,
-  roundTimeoutMs: 8000,
-});
-
+/** @type {ConversationSession | null} */
+let session = null;
 let listening = false;
 let stopListening = null;
 let muted = false;
 
-async function boot() {
+/**
+ * @param {string} llmManifestName - 'driver-llm-fixture' or
+ *   'driver-llm-local', chosen explicitly by the person in the setup
+ *   panel above - never switched automatically.
+ */
+async function boot(llmManifestName) {
+  session = new ConversationSession({
+    sessionId: `uagent-${Date.now()}`,
+    manifests,
+    baseUrl: import.meta.url,
+    llmManifestName,
+    voiceManifestName: 'driver-voice',
+    roboticsManifestName: 'driver-robotics-sim',
+    a11y,
+    allowedConstraints: ['workspace:temp-only', 'robotics:bounded-move'],
+    maxUncertainty: 0.5,
+    roundTimeoutMs: 8000,
+  });
+
   a11y.setStatus('Loading capabilities…');
   let loadedCapabilities = [];
   try {
@@ -84,7 +98,8 @@ async function boot() {
     return;
   }
 
-  for (const name of manifests.map((m) => m.name)) {
+  const relevantManifests = manifests.filter((m) => m.name === llmManifestName || m.kind !== 'llm');
+  for (const name of relevantManifests.map((m) => m.name)) {
     const li = document.createElement('li');
     const wasLoaded = loadedCapabilities.includes(name);
     li.textContent = wasLoaded ? `${name}: loaded` : `${name}: not loaded`;
@@ -98,8 +113,33 @@ async function boot() {
     el.voiceFallbackNote.hidden = false;
   }
 
+  el.conversationSection.hidden = false;
+  el.roboticsSection.hidden = false;
+  el.capabilitiesSection.hidden = false;
   a11y.setStatus('Ready. Type a message or use voice input.');
 }
+
+el.startButton.addEventListener('click', async () => {
+  const chosen = document.querySelector('input[name="llm-source"]:checked')?.value ?? 'fixture';
+  el.startButton.disabled = true;
+
+  if (chosen === 'local') {
+    el.modelLoadStatus.textContent = `Loading ${LOCAL_MODEL_ID}…`;
+    try {
+      await loadLocalModel((report) => {
+        el.modelLoadStatus.textContent = report.text ?? 'Loading…';
+      });
+      el.modelLoadStatus.textContent = `${LOCAL_MODEL_ID} loaded.`;
+    } catch (e) {
+      el.modelLoadStatus.textContent = `Failed to load the real model: ${e && e.message}. Falling back to the fixture.`;
+      el.startButton.disabled = false;
+      await boot('driver-llm-fixture');
+      return;
+    }
+  }
+
+  await boot(chosen === 'local' ? 'driver-llm-local' : 'driver-llm-fixture');
+});
 
 el.form.addEventListener('submit', async (event) => {
   event.preventDefault();
@@ -197,5 +237,3 @@ el.estopButton.addEventListener('click', () => {
   el.roboticsStatus.textContent = 'EMERGENCY STOP engaged - all pending movement cancelled.';
   a11y.announce('Emergency stop engaged.');
 });
-
-boot();

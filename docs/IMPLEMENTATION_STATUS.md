@@ -250,7 +250,7 @@ section is a status summary only.
 
 - **Implemented and tested**: the full `packages/*` polyglot layer
   (contracts/core/loader/three roles/five capability contracts/drivers/
-  host-browser/host-local/binding-javascript/uagent/devtools) - 99 JS
+  host-browser/host-local/binding-javascript/uagent/devtools) - 102 JS
   tests, all real dynamic-`import()` loading (not a stub beside
   hardwired logic - `@usdk/loader` is the actual mechanism
   `host-browser`/`host-local` use); `packages/binding-python` (8 tests
@@ -259,19 +259,23 @@ section is a status summary only.
   execution profiles (Browser-local, Connected) verified end-to-end in
   a real interactive browser session, including a real bug
   (`driver-voice`'s `speak()` hanging forever in one browser-automation
-  environment) found and fixed through that testing - see
-  `docs/VALIDATION.md` "UAgent browser extension validation".
+  environment) found and fixed through that testing; **a real
+  local-inference LLM driver** (`driver-llm-local`, WebLLM/WebGPU,
+  `SmolLM2-360M-Instruct-q4f16_1-MLC`), opt-in only, verified live with
+  a real question and a real, correct, model-generated answer that then
+  went through the full three-party vote - see `docs/VALIDATION.md`
+  "UAgent browser extension validation".
 - **Deferred**: `packages/binding-lua` (written, believed correct by the
   same review process that validated the Python binding's struct
   layouts, but **not run** - no Lua/LuaJIT runtime exists anywhere in
   this environment); binding `usdk-deliberate`/`usdk-verify`/`usdk-core`
-  in either binding (only `usdk-perceive` is bound); a real
-  local-inference LLM driver (`driver-llm-local` exists as a distinctly-
-  named slot, does not itself perform real inference); real camera-based
+  in either binding (only `usdk-perceive` is bound); real camera-based
   vision (`driver-vision` exists as a contract implementation, not
   independently verified against a real camera feed in this
   environment); physical robotics hardware (simulated only, by the
-  task's own explicit instruction).
+  task's own explicit instruction); fine-tuning or training any model
+  (explicitly out of scope throughout - `driver-llm-local` runs an
+  already-trained, third-party-published model unmodified).
 - **Not tested** (see `docs/VALIDATION.md` for the full list): a real
   spoken microphone utterance in a live browser (the automation tooling
   available here does not provide real audio input); TLS/HTTPS for

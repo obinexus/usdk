@@ -14,11 +14,23 @@
   <p class="subtitle">A trilateral-approved conversational agent - browser-local demo. Every response is approved by three independent checks before it is shown or spoken.</p>
 </header>
 
-<div id="status-line" role="status" aria-live="polite">Loading capabilities&hellip;</div>
+<div id="status-line" role="status" aria-live="polite">Choose an LLM source to begin.</div>
 <div id="announcer" class="sr-only" role="status" aria-live="assertive"></div>
 
 <main>
-  <section aria-labelledby="conversation-heading">
+  <section aria-labelledby="setup-heading">
+    <h2 id="setup-heading">1. Choose an LLM source</h2>
+    <p class="note">The fixture is instant and clearly labeled as not real inference. The real model runs entirely in this browser tab via WebGPU - no server, no account - but downloads model weights the first time (cached after).</p>
+    <fieldset id="llm-source-fieldset">
+      <legend class="sr-only">LLM source</legend>
+      <label><input type="radio" name="llm-source" value="fixture" checked /> Fixture (deterministic, instant, not real inference)</label>
+      <label><input type="radio" name="llm-source" value="local" /> Real local model - SmolLM2-360M via WebLLM (~376MB download, first time only)</label>
+    </fieldset>
+    <div id="model-load-status" role="status" aria-live="polite"></div>
+    <button type="button" id="start-button">Start</button>
+  </section>
+
+  <section aria-labelledby="conversation-heading" id="conversation-section" hidden>
     <h2 id="conversation-heading">Conversation</h2>
     <div id="transcript" role="log" aria-label="Conversation transcript" tabindex="0"></div>
 
@@ -36,7 +48,7 @@
     <p id="voice-fallback-note" class="note" hidden>Speech features are not available in this browser - text works fully on its own.</p>
   </section>
 
-  <section aria-labelledby="robotics-heading">
+  <section aria-labelledby="robotics-heading" id="robotics-section" hidden>
     <h2 id="robotics-heading">Simulated robotics control</h2>
     <p class="note">No physical hardware - a bounded, simulated movement. Each move still requires three-party approval before it runs. Emergency stop does not wait for approval.</p>
     <div id="robotics-controls" role="group" aria-label="Robotics movement controls">
@@ -49,7 +61,7 @@
     <div id="robotics-status" role="status" aria-live="polite"></div>
   </section>
 
-  <section aria-labelledby="capabilities-heading">
+  <section aria-labelledby="capabilities-heading" id="capabilities-section" hidden>
     <h2 id="capabilities-heading">Loaded capabilities</h2>
     <ul id="capability-list"></ul>
   </section>
@@ -65,6 +77,7 @@
     "@usdk/deliberate": "../../deliberate/src/index.mjs",
     "@usdk/verify": "../../verify/src/index.mjs",
     "@usdk/host-browser": "../../host-browser/src/index.mjs",
+    "@usdk/driver-llm-local": "../../driver-llm-local/src/index.mjs",
     "@usdk/capability-llm": "../../capability-llm/src/index.mjs",
     "@usdk/capability-voice": "../../capability-voice/src/index.mjs",
     "@usdk/capability-robotics": "../../capability-robotics/src/index.mjs"

@@ -159,7 +159,7 @@ shell required, unlike the native build above):
 
 ```bash
 npm install --offline
-npm test                 # 99 JS tests
+npm test                 # 102 JS tests
 npm run dev               # serves packages/ directly, no build step
 ```
 
@@ -169,6 +169,15 @@ Then open `http://127.0.0.1:8420/packages/uagent/public/index.html`
 first and copy its printed pairing secret into the page). `npm run
 build && npm run serve` builds and serves the standalone `dist/` output
 instead.
+
+`index.html`'s setup panel offers a choice of LLM source before
+starting: the fixture (instant, deterministic, clearly labeled) or a
+real local model (`SmolLM2-360M` via WebLLM, WebAssembly + WebGPU, no
+server) - the latter needs a WebGPU-capable browser and downloads
+~376MB the first time (cached after), only once you explicitly pick it
+and click Start. See `docs/UAGENT_ARCHITECTURE.md` "Do not present
+fixture responses as real model inference" for exactly what it does and
+does not claim.
 
 ## Diagnosing a rejected agreement round
 

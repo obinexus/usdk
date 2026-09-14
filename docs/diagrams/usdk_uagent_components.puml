@@ -128,8 +128,12 @@ note bottom of drivers
   simulated, no physical hardware.
   driver-llm-fixture labels every
   response "[fixture] ... not real
-  model inference" - see
-  docs/UAGENT_ARCHITECTURE.md
+  model inference". driver-llm-local
+  performs REAL inference (WebLLM,
+  WebAssembly + WebGPU, in-browser,
+  opt-in only) and labels every
+  response "[local: <model id>]" -
+  see docs/UAGENT_ARCHITECTURE.md
   "Do not present fixture responses
   as real model inference."
 end note

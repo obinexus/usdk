@@ -259,7 +259,7 @@ npm install --offline                          # zero network access - internal 
 npm test                                        # node --test packages/*/test/*.test.mjs
 ```
 
-- 99 JS tests (`node --test`) across `contracts`, `core`, `loader`,
+- 102 JS tests (`node --test`) across `contracts`, `core`, `loader`,
   `perceive`, `deliberate`, `verify`, `capability-llm`,
   `capability-robotics`, `driver-llm-fixture`, `driver-llm-local`,
   `driver-voice` (incl. the `speak()` fallback-timeout regression, see
@@ -322,6 +322,33 @@ regression tests (`driver-voice.test.mjs`) using a fake
 in the same browser pane afterward (the turn now resolves, via the
 fallback, instead of hanging forever).
 
+**`driver-llm-local` (real local inference via WebLLM), verified live,
+including a real failure found and characterized**: from
+`packages/uagent/public/index.html`'s setup panel, chose "Real local
+model", clicked Start. First attempt: WebLLM's own library and config/
+tokenizer/wasm files loaded correctly (confirmed via
+`performance.getEntriesByType('resource')`), four of the model's
+parameter shards downloaded and cached successfully, then
+`Cache.add()` failed on a later shard with `"Cache.add() encountered a
+network error"` - the app's error handling caught it and fell back to
+the fixture driver correctly, exactly as designed. Diagnosed directly
+before retrying (rather than assumed): `caches.open().add()` on a small
+test file succeeded immediately afterward, and
+`navigator.storage.estimate()` reported ~404GB quota against ~8MB used
+- ruling out a Cache API or quota problem in this environment, leaving a
+transient network interruption on that one large fetch as the
+explanation. **Retried the identical flow**: loaded cleanly this time
+(`SmolLM2-360M-Instruct-q4f16_1-MLC loaded.`), and a real question -
+"What is the capital of France? Answer in one short sentence." - got a
+real, correct, model-generated answer ("The capital of France is
+Paris."), labeled `[local: SmolLM2-360M-Instruct-q4f16_1-MLC]` (never
+mistaken for the fixture), which then went through the same
+perceive/deliberate/verify vote as any other candidate before being
+displayed. Not reproduced on the second run - characterized as a
+one-off transient network interruption on a single large fetch, not a
+defect in `driver-llm-local` or `@usdk/host-browser`, but reported here
+exactly as observed rather than omitted because it didn't recur.
+
 ## Not tested (stated plainly)
 
 - Linux and macOS builds (see "Environment actually used" above).
@@ -333,8 +360,14 @@ fallback, instead of hanging forever).
   `runtime_dir` concurrently (the consensus protocol's crash/restart
   handling was tested sequentially - open, kill the `usdk_core_t`,
   reopen - never with two processes actually running at once).
-- A real local-inference driver (none exists in this release - see
-  `docs/IMPLEMENTATION_STATUS.md`).
+- `driver-llm-local` across multiple models/quantizations - only the
+  one default model (`SmolLM2-360M-Instruct-q4f16_1-MLC`) was verified;
+  swapping `MODEL_ID` to a larger/different WebLLM model was not tried.
+- `driver-llm-local` on a machine without a working WebGPU adapter, or
+  in a browser that only partially implements `navigator.gpu` - the
+  `isAvailable()`/honest-degradation path is unit-tested (Node has no
+  `navigator.gpu` at all), but not exercised against a real browser
+  that has the API surface but a broken/unsupported adapter.
 - `packages/binding-lua` against a real LuaJIT runtime - none exists in
   this environment (see its README).
 - `packages/binding-python`/`binding-lua` binding `usdk-deliberate`,

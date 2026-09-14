@@ -410,12 +410,37 @@ below.
 `"[fixture] deterministic fixture response - not real model inference"`
 and includes the evidence count and max uncertainty it saw, so a
 developer reading a transcript (or this document) cannot mistake it for
-a real model's output. `driver-llm-local` (browser-only) exists as a
-second, distinctly-named driver for a real local-inference backend
-*if* one is wired in later - it is not claimed to produce real inference
-in this release either; see its own module docstring for exactly what
-it does and does not do today. No response anywhere in this codebase is
-labeled as coming from a real trained model.
+a real model's output.
+
+`driver-llm-local` (browser-only) **does now perform real inference**:
+it runs [WebLLM](https://github.com/mlc-ai/web-llm) - a real,
+already-trained model (`SmolLM2-360M-Instruct-q4f16_1-MLC`, chosen for
+its small ~376MB download) executing locally via WebAssembly + WebGPU,
+no server, no account. Its every response is prefixed
+`"[local: SmolLM2-360M-Instruct-q4f16_1-MLC]"` (the exact model id, not
+a generic "[local]" label) so it is never mistaken for the fixture or
+presented as something more than what it is. **This is still not model
+training** - the weights are WebLLM's own prebuilt release, downloaded
+and cached by the browser; this project trains nothing. Loading the
+model is opt-in only: `packages/uagent/public/index.html` requires an
+explicit "Real local model" choice and a "Start" click before any
+download begins - it is never triggered by simply opening the page (see
+"Why zero dependencies" below for how the WebLLM *library* itself is
+loaded without becoming an npm dependency of this workspace). Verified
+live: a real question ("What is the capital of France?") got a real,
+correct, model-generated answer, which then went through the same
+three-party vote as any other candidate before being displayed - see
+`docs/VALIDATION.md` for the full verification, including a transient
+failure found and characterized (a `Cache.add()` network error on one
+parameter shard on the first attempt, succeeded cleanly on retry - not
+reproduced on a second full run, and not caused by anything in this
+project's own code, per `navigator.storage.estimate()`/Cache API checks
+run at the time).
+
+No response anywhere in this codebase is labeled as coming from a real
+trained model when it is not; `driver-llm-fixture` remains available
+and is still the default choice, precisely because it is instant and
+requires no download.
 
 ---
 
@@ -462,3 +487,12 @@ bridge spawns `usdk.exe` as a subprocess instead. Python and LuaJIT do
 have a built-in FFI (`ctypes`, `ffi`), which is why `binding-python`
 and `binding-lua` can and do call the native ABI in-process with no
 added dependency at all.
+
+`driver-llm-local`'s use of WebLLM is the same pattern applied to a
+third case: the library is loaded via a runtime `import()` of a CDN ESM
+URL (`https://esm.run/@mlc-ai/web-llm`) **inside `loadModel()`**, not
+listed in any `package.json` - `npm install --offline`'s zero-network
+guarantee is untouched by this, since nothing about `npm install` reads
+that URL; the fetch happens only in a browser, only after an explicit
+user action, exactly like the model-weight download it triggers (see
+"Do not present fixture responses as real model inference" above).

@@ -6,6 +6,7 @@
   "dependencies": {
     "@usdk/host-browser": "0.1.0",
     "@usdk/driver-llm-fixture": "0.1.0",
+    "@usdk/driver-llm-local": "0.1.0",
     "@usdk/driver-voice": "0.1.0",
     "@usdk/driver-robotics-sim": "0.1.0"
   }

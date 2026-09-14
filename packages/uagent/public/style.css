@@ -122,6 +122,15 @@ button:focus-visible {
 #capability-list li { margin-bottom: 0.25rem; }
 .cap-unavailable { color: var(--muted); }
 
+#llm-source-fieldset {
+  border: 1px solid var(--border);
+  border-radius: 0.25rem;
+  padding: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+#llm-source-fieldset label { display: block; margin-bottom: 0.4rem; }
+#model-load-status { min-height: 1.2rem; margin-bottom: 0.5rem; color: var(--muted); }
+
 @media (prefers-color-scheme: dark) {
   :root {
     --fg: #eee;
